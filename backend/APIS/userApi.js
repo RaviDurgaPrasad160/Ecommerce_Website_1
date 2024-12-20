@@ -1,59 +1,49 @@
 const exp = require('express')
 const userApp = exp.Router()
-
-// import dotenv
 require('dotenv').config()
-
-// importing bcryptjs to hash password
 const bcryptjs = require('bcryptjs')
-
-// importing jsonwebtoken to create token
 let jwt = require('jsonwebtoken')
-
-// importing expressAsyncHandler
 const expressAsyncHandler = require('express-async-handler')
 
 // to extract body of request
 userApp.use(exp.json())
 
-// route to handle login request
+// route to handle user login
 userApp.post('/loginuser', expressAsyncHandler(async(req,res)=>{
-    // get userCollection Obj
-    let userCollectionObj = req.app.get('userCollectionObj')
-    // getting login credentials
-    let loginCredentials = req.body
-    let userofDB = await userCollectionObj.findOne({email:loginCredentials.email})
-    if(userofDB == null){
+    const userCollectionObj = req.app.get('userCollectionObj')
+    const loginCredentials = req.body
+
+    const userofDB = await userCollectionObj.findOne({email:loginCredentials.email})
+    if(!userofDB){
         res.send({message:"Invalid email or password"})
     }
     // if username match
     else {
         // to compare passwords
-        let status = await bcryptjs.compare(loginCredentials.password, userofDB.password)
+        let isPasswordValid = await bcryptjs.compare(loginCredentials.password, userofDB.password)
         // if password does not match
-        if(status === false){
+        if(!isPasswordValid){
             res.send({message:"Invalid username or password"})
         }
         // if psssword match
         else {
             // create token
-            let token = jwt.sign({message:userofDB.email}, process.env.SECRET_KEY, {expiresIn:60})
+            const token = jwt.sign({message:userofDB.email}, process.env.SECRET_KEY, {expiresIn: '7d'})
             res.send({message:"success", payload:token, userObj:userofDB})
         }
     }
     
 }))
 
-// route to handle create-user
+// route to handle user creation
 userApp.post('/create-user', expressAsyncHandler(async(req,res)=>{
-    // get userCollection Obj
-    let userCollectionObj = req.app.get('userCollectionObj')
-    //get user from client
-    let newUserObj = req.body
+    const userCollectionObj = req.app.get('userCollectionObj')
+    const newUserObj = req.body
+
     // to check whether new user exist or not
-    let userofDB = await userCollectionObj.findOne({email:newUserObj.email})
+    const userofDB = await userCollectionObj.findOne({email:newUserObj.email})
     // if username  exist
-    if(userofDB !== null){
+    if(userofDB){
        res.send({message:"user already exist"})
     }
     // if username does not existed

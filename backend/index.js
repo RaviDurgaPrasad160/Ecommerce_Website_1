@@ -11,20 +11,21 @@ app.use(cors())
 // DB connetion URL
 let DBurl = process.env.MONGODB_URL
 
+// Connect to MongoDB
 mclient.connect(DBurl)
 .then((client)=>{
-    // get database obj
+  
     let dbobj = client.db('prasad2024')
-    
-    // creating userCollection obj
     let userCollectionObj = dbobj.collection('userCollection')
 
     // sharing userCollection obj to api
     app.set('userCollectionObj', userCollectionObj)
-    
     console.log('DB connection is successfull') 
 })
-.catch(err=> console.log(`Error in DB ${err}`))
+.catch((err) => {
+    console.error(`Error in DB connection: ${err}`);
+    process.exit(1); // Exit process if DB connection fails
+  });
 
 // import userApp
 const userApp = require('./APIS/userApi')
@@ -35,12 +36,12 @@ app.use("/user-api", userApp)
 
 // Invalid path middleware
 app.use((req,res,next)=>{
-    res.send({message:`Invalid path ${req.url}`})
+    res.status(404).send({ message: `Invalid path: ${req.url}` });
 })
 
 // error handle middleware
 app.use((err,req,res,next)=>{
-    res.send({message:`${err}`})
+    res.status(500).send({ message: 'Internal Server Error', error: err.message });
 })
 
 let port = 8000 || process.env.PORT

@@ -14,3 +14,5 @@ const verifyToken = (req, res, next) => {
         res.send({ message: "Invalid or Session expired" });
     }
 };
+
+module.exports = verifyToken

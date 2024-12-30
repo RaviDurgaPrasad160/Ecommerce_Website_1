@@ -4,6 +4,7 @@ require('dotenv').config()
 const bcryptjs = require('bcryptjs')
 let jwt = require('jsonwebtoken')
 const expressAsyncHandler = require('express-async-handler')
+const verifyToken = require('./middlewares/verifyToken')
 
 // to extract body of request
 userApp.use(exp.json())
@@ -54,6 +55,7 @@ userApp.post('/create-user', expressAsyncHandler(async(req,res)=>{
         //  assign hashed password
         newUserObj.password = hashedPassword;
         // insert newUser
+        newUserObj.role = newUserObj.role || 'GENERAL';
         delete newUserObj.conformpassword
         await userCollectionObj.insertOne(newUserObj)
 
@@ -61,6 +63,14 @@ userApp.post('/create-user', expressAsyncHandler(async(req,res)=>{
     }
 
 }))
+
+// Route to get all users
+userApp.get('/get-users',verifyToken, expressAsyncHandler(async (req, res) => {
+    const userCollectionObj = req.app.get('userCollectionObj');
+
+    const users = await userCollectionObj.find().toArray();
+    res.send({ message: "Users fetched successfully", users });
+}));
 
 // route to handle update-user 
 userApp.use('/update-user', expressAsyncHandler(async(req,res)=>{
